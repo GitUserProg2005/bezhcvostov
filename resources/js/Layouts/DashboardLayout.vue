@@ -19,6 +19,7 @@ const searchFn = async () => []
 const page = usePage();
 const currentUser = computed(() => page.props.auth?.user || null);
 const username = computed(() => currentUser.value?.name ?? 'Username');
+const balance = computed(() => currentUser.value?.balance ?? 0);
 
 </script>
 
@@ -83,10 +84,10 @@ const username = computed(() => currentUser.value?.name ?? 'Username');
 
                 <div class="min-w-0 pointer-events-none">
                   <div class="font-semibold truncate">
-                    Дмитрий
+                    {{ username }}
                   </div>
                   <div class="flex items-center gap-2">
-                    <span>344</span> 
+                    <span>{{ balance }}</span> 
                     <img src="/img/crystal.png" class="w-3 object-contain" alt="">
                   </div>
                 </div>

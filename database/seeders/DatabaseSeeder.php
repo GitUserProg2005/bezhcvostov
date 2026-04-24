@@ -21,11 +21,14 @@ class DatabaseSeeder extends Seeder
             ['email' => 'test@example.com'],
             [
                 'name' => 'Test User',
+                'balance' => 250,
                 'password' => bcrypt('password'),
                 'email_verified_at' => now(),
             ],
         );
 
+        $this->call(SlotsSeeder::class);
+        $this->call(ItemsSeeder::class);
         $this->call(NotesFoldersSeeder::class);
     }
 }

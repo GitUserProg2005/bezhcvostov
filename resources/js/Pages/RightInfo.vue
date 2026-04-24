@@ -18,6 +18,7 @@ const emit = defineEmits(['update:isOpenRightInfo']);
 const page = usePage();
 const currentUser = computed(() => page.props.auth?.user ?? null);
 const username = computed(() => currentUser.value?.name ?? 'Пользователь');
+const balance = computed(() => currentUser.value?.balance ?? 0);
 const friends = ref([]);
 const friendsLoading = ref(false);
 const tasks = ref([]);
@@ -86,7 +87,7 @@ const closeRightInfo = () => {
             <h3 class="title-3">{{ username }}</h3>
             <span class="flex items-center gap-1">
               <img src="/img/crystal.png" class="w-3 object-contain" alt="">
-              <span>2345</span>
+              <span>{{ balance }}</span>
             </span>
           </div>
         </div>
@@ -136,7 +137,7 @@ const closeRightInfo = () => {
             <h3>{{ username }}</h3>
             <span class="flex items-center gap-1">
               <img src="/img/crystal.png" class="w-3 object-contain" alt="">
-              <span>2345</span> 
+              <span>{{ balance }}</span>
             </span>
           </div>
         </div>     
