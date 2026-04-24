@@ -5,6 +5,7 @@ namespace App\Services\AI;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+
 class Ollama
 {
     public function sendRequest(string $prompt, bool $jsonFormat = false): mixed

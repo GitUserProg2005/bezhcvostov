@@ -41,7 +41,7 @@ const closeSidebar = () => {
       :class="isOpenSidebar ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
     >
       <div class="h-full rounded-r-3xl p-0 flex flex-col">
-        <div class="p-4 flex flex-col h-full gap-2">
+        <div class="p-4 flex items-center  flex-col h-full gap-2">
           <!-- Top card -->
           <div class="p-0">
             <div class="flex items-center justify-between lg:justify-center">
@@ -114,6 +114,10 @@ const closeSidebar = () => {
 
             <button class="primary-btn-white w-full">Установить</button>
           </div>-->
+
+          <Link :href="route('game.index')">
+            <img src="/img/game/preview_nora.png" class="flex items-center justify-center w-full object-contain pointer-events-none" alt="">
+          </Link>
         </div>
       </div>
     </aside>

@@ -6,6 +6,7 @@ use App\Models\Insight;
 use App\Models\Room;
 use App\Services\AI\GoWhisper;
 use App\Services\AI\ProcessInsight;
+use App\Services\IncrementUserBalance;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -42,7 +43,7 @@ class InsightController extends Controller
         ]);
     }
 
-    public function createFromAudio(Request $request, ProcessInsight $processInsight): JsonResponse
+    public function createFromAudio(Request $request, ProcessInsight $processInsight, IncrementUserBalance $incrementUserBalance): JsonResponse
     {
         $validated = $request->validate([
             'audio_file' => ['required', 'file', 'max:30720'],
@@ -64,6 +65,8 @@ class InsightController extends Controller
             'user_id' => $request->user()->id,
             'output' => $output,
         ])->fresh(['room:id,title,link_id']);
+
+        $incrementUserBalance->handle($request->user(), 'insight');
 
         return response()->json([
             'success' => true,

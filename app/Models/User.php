@@ -27,6 +27,7 @@ class User extends Authenticatable
         'avatar',
         'email',
         'phone',
+        'balance',
         'password',
     ];
 
@@ -58,6 +59,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'balance' => 'integer',
             'password' => 'hashed',
         ];
     }
@@ -96,6 +98,13 @@ class User extends Authenticatable
     public function aiMessages(): HasMany
     {
         return $this->hasMany(AiMessage::class);
+    }
+
+    public function items(): BelongsToMany
+    {
+        return $this->belongsToMany(Item::class, 'user_items')
+            ->withPivot('is_active')
+            ->withTimestamps();
     }
 
     /**

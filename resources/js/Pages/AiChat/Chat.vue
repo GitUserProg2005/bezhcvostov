@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, ref } from 'vue';
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import axios from 'axios';
 import OutputMessage from '@/Pages/AiChat/components/OutputMessage.vue';
 import MascotEmotionAvatar from '@/Pages/AiChat/components/MascotEmotionAvatar.vue';
@@ -15,8 +15,6 @@ const isSending = ref(false);
 const messageText = ref('');
 const messages = ref([]);
 const messagesContainer = ref(null);
-
-const isTopHalf = computed(() => y.value < window.innerHeight / 2);
 
 const getMainRect = () => {
     const main = document.querySelector('main');
@@ -45,6 +43,15 @@ const clampPosition = (nextX, nextY) => {
         x: Math.min(Math.max(nextX, minX), maxX),
         y: Math.min(Math.max(nextY, minY), maxY),
     };
+};
+
+const setBottomRightPosition = () => {
+    const rect = getMainRect();
+    const size = 56;
+    const padding = 20;
+    const clamped = clampPosition(rect.right - size - padding, rect.bottom - size - padding);
+    x.value = clamped.x;
+    y.value = clamped.y;
 };
 
 const scrollToBottom = async () => {
@@ -150,6 +157,12 @@ const processMessage = async () => {
 
 onBeforeUnmount(() => {
     stopDrag();
+    window.removeEventListener('resize', setBottomRightPosition);
+});
+
+onMounted(() => {
+    setBottomRightPosition();
+    window.addEventListener('resize', setBottomRightPosition);
 });
 </script>
 
@@ -176,7 +189,7 @@ onBeforeUnmount(() => {
 
             <div
                 class="absolute w-[18rem] h-[30rem] bg-content-glass rounded-2xl overflow-hidden flex flex-col"
-                :class="['left-full ml-2', isTopHalf ? 'top-0' : 'bottom-0']"
+                :class="['left-full ml-2 bottom-0']"
             >
                 <div class="flex items-center justify-between p-4 border-b border-white/10">
                     <h3 class="title-font-4">Хвостик</h3>

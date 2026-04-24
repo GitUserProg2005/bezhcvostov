@@ -11,6 +11,7 @@ use App\Services\AI\Actions\ActionManager;
 use App\Services\AI\GoWhisper;
 use App\Services\AI\Gigachat;
 use App\Services\AI\Llama32Vision;
+use App\Services\IncrementUserBalance;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -221,7 +222,7 @@ class TaskController extends Controller
         ]);
     }
 
-    public function updateTaskStatus(Request $request): JsonResponse
+    public function updateTaskStatus(Request $request, IncrementUserBalance $incrementUserBalance): JsonResponse
     {
         $validated = $request->validate([
             'task_id' => ['required', 'integer'],
@@ -233,8 +234,16 @@ class TaskController extends Controller
             ->where('user_id', $request->user()->id)
             ->firstOrFail();
 
+        $oldStatus = $task->status?->value;
+
         $task->update([
             'status' => $validated['status'],
+        ]);
+
+        $incrementUserBalance->handle($request->user(), 'task', [
+            'old_status' => $oldStatus,
+            'new_status' => $validated['status'],
+            'difficulty' => $task->difficulty?->value,
         ]);
 
         return response()->json([

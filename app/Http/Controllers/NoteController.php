@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Folder;
 use App\Models\Note;
+use App\Services\IncrementUserBalance;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -39,7 +40,7 @@ class NoteController extends Controller
         ]);
     }
 
-    public function create(Request $request): JsonResponse
+    public function create(Request $request, IncrementUserBalance $incrementUserBalance): JsonResponse
     {
         $validated = $request->validate([
             'title' => ['required', 'string', 'max:255'],
@@ -59,6 +60,8 @@ class NoteController extends Controller
             'title' => $validated['title'],
             'content' => $validated['content'] ?? null,
         ]);
+
+        $incrementUserBalance->handle($user, 'note');
 
         return response()->json($note, 201);
     }

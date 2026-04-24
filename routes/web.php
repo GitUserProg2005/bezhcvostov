@@ -8,6 +8,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\VideoCallController;
 use App\Http\Controllers\InsightController;
+use App\Http\Controllers\GameController;
+use App\Http\Controllers\ItemController;
 use App\Services\Prometheus\Metrics;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -73,6 +75,11 @@ Route::middleware('auth')->group(function () {
     // AI chat routes
     Route::get('/ai/messages', [AiChatController::class, 'getAiMessages'])->name('ai.messages.get');
     Route::post('/ai/messages/process', [AiChatController::class, 'processMessage'])->name('ai.messages.process');
+
+    Route::get('/sandfox', [GameController::class, 'index'])->name('game.index');
+    Route::get('/game/slot-items', [ItemController::class, 'getSlotItems'])->name('game.slot-items');
+    Route::get('/game/items', [ItemController::class, 'getItems'])->name('game.items');
+    Route::post('/game/items/add', [ItemController::class, 'addItemToUser'])->name('game.items.add');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
