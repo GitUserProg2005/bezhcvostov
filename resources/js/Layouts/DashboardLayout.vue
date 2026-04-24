@@ -5,6 +5,7 @@ import Sidebar from '@/Components/Sidebar.vue';
 import RightInfo from '@/Pages/RightInfo.vue';
 import Search from '@/Components/Search/Search.vue';
 import Avatar from '@/Components/Avatar.vue';
+import Chat from '@/Pages/AiChat/Chat.vue';
 
 import { computed, ref } from 'vue'
 import { usePage } from '@inertiajs/vue3';
@@ -38,7 +39,7 @@ const username = computed(() => currentUser.value?.name ?? 'Username');
     />
 
     <!-- Main -->
-    <main class="overflow-y-auto bg-content">
+    <main class="relative overflow-y-auto bg-content">
       <header class="sticky top-0 z-50 backdrop-blur-xl px-4">
         <div class="py-3">
           <div class="flex items-center justify-between gap-6 w-full">
@@ -100,6 +101,8 @@ const username = computed(() => currentUser.value?.name ?? 'Username');
           <slot />
         </div>
       </div>
+
+      <Chat />
     </main>
     
     <RightInfo

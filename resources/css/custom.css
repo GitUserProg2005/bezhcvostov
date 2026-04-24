@@ -190,6 +190,11 @@ html.dark .bg-content-glass,
     background-clip: padding-box, border-box;
 }
 
+.bg-content-accent {
+    background-color: var(--accent);
+    color: #ffffff;
+}
+
 /*
  * ---------------------------------------------------------------------------
  * bg-content-outline — только фон и рамка в стиле .content-outline (без padding,

@@ -93,6 +93,11 @@ class User extends Authenticatable
         return $this->hasMany(Insight::class);
     }
 
+    public function aiMessages(): HasMany
+    {
+        return $this->hasMany(AiMessage::class);
+    }
+
     /**
      * Генерируем url к аватару пользователя
      */
