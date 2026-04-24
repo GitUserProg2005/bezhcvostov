@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CounterController;
+use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\FolderController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\ProfileController;
@@ -68,6 +69,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/notes/update-title', [NoteController::class, 'updateTitle'])->name('notes.update-title');
     Route::post('/notes/update', [NoteController::class, 'update'])->name('notes.update');
     Route::post('/notes/delete', [NoteController::class, 'delete'])->name('notes.delete');
+
+    // AI chat routes
+    Route::get('/ai/messages', [AiChatController::class, 'getAiMessages'])->name('ai.messages.get');
+    Route::post('/ai/messages/process', [AiChatController::class, 'processMessage'])->name('ai.messages.process');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
