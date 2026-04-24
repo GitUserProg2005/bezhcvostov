@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 class ProcessInsight
 {
     public function __construct(
-        private readonly Ollama $ollama,
+        private readonly Gigachat $ollama,
     ) {
     }
 
@@ -29,28 +29,28 @@ class ProcessInsight
     private function buildPrompt(string $text): string
     {
         return <<<PROMPT
-Ты помощник-аналитик урока.
-Нужно преобразовать расшифровку звонка в СТРОГО валидный JSON.
+        Ты помощник-аналитик урока.
+        Нужно преобразовать расшифровку звонка в СТРОГО валидный JSON.
 
-Жесткие правила:
-1) Верни только JSON-объект без markdown/комментариев.
-2) Формат строго:
-{
-  "items": [
-    { "type": "text", "text": "..." },
-    { "type": "notes", "title": "...", "description": "..." }
-  ]
-}
-3) Поддерживаются только type: "text" и "notes".
-4) Для notes поля title и description ОБЯЗАТЕЛЬНЫ и непустые строки.
-5) Для text поле text обязательно и непустая строка.
-6) Никаких других полей.
-7) Минимум 3 элемента, максимум 12.
-8) Сначала короткий summary как text, затем 2-5 notes, затем рекомендации text.
+        Жесткие правила:
+        1) Верни только JSON-объект без markdown/комментариев.
+        2) Формат строго:
+        {
+        "items": [
+            { "type": "text", "text": "..." },
+            { "type": "notes", "title": "...", "description": "..." }
+        ]
+        }
+        3) Поддерживаются только type: "text" и "notes".
+        4) Для notes поля title и description ОБЯЗАТЕЛЬНЫ и непустые строки.
+        5) Для text поле text обязательно и непустая строка.
+        6) Никаких других полей.
+        7) Минимум 3 элемента, максимум 12.
+        8) Сначала короткий summary как text, затем 2-5 notes, затем рекомендации text.
 
-Расшифровка звонка:
-{$text}
-PROMPT;
+        Расшифровка звонка:
+        {$text}
+        PROMPT;
     }
 
     /**

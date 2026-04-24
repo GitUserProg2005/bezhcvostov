@@ -11,7 +11,7 @@ class NotesFoldersSeeder extends Seeder
 {
     public function run(): void
     {
-        $user = User::query()->where('id', 2)->first();
+        $user = User::query()->where('id', 1)->first();
 
         if (! $user) {
             return;

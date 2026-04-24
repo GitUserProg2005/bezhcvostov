@@ -9,6 +9,7 @@ use App\Models\Subtask;
 use App\Models\Task;
 use App\Services\AI\Actions\ActionManager;
 use App\Services\AI\GoWhisper;
+use App\Services\AI\Gigachat;
 use App\Services\AI\Llama32Vision;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -145,8 +146,8 @@ class TaskController extends Controller
             ], 422);
         }
 
-        // $photoText = app(Gigachat::class)->analyzeImage(...);
-        $photoText = app(Llama32Vision::class)->extractSchoolTaskText($localImagePath);
+        $photoText = app(Gigachat::class)->extractSchoolTaskText($localImagePath);
+        // $photoText = app(Llama32Vision::class)->extractSchoolTaskText($localImagePath);
 
         $actionManager = ActionManager::manage($request->user()->id, (string) $photoText);
 

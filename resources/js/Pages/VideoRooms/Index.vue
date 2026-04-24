@@ -54,16 +54,22 @@ async function createRoom() {
             </button>
 
             <div class="flex flex-col f-hull justify-between gap-2">
-                <div class="content-accent h-1/2">
+                <div class="relative overflow-hidden content-accent h-1/2">
                     <h4 class="title-2">
                         Закрепляй знания
                     </h4>
+                    <p>Хранение знаний вместе с учителем!</p>
+
+                    <img src="/img/image.png" class="absolute -bottom-8 -right-3 w-64 rounded-2xl" alt="">
                 </div>
 
-                <div class="content-glass h-1/2">
+                <div class="relative overflow-hidden content-glass h-1/2">
                     <h4 class="title-2">
                         Хвостик с тобой 
                     </h4>
+                    <p class="context">Задавай вопросы и получай ответы на них!</p>
+
+                    <img src="/img/maskot/hello.png" class="absolute -bottom-10 -right-3 w-24 rounded-2xl" alt="">
                 </div>
             </div>
         </div>

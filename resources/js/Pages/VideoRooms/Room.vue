@@ -382,9 +382,29 @@ async function handleAnswer(answer) {
         return;
     }
 
+    // Duplicate/out-of-order answers are possible in real networks.
+    // An answer can only be applied while we are in "have-local-offer".
+    const signalingState = pc.signalingState;
+    if (signalingState !== 'have-local-offer') {
+        debugLog('answer:handle:skip:unexpected-signaling-state', {
+            signalingState,
+            currentRemoteType: pc.currentRemoteDescription?.type ?? null,
+            currentLocalType: pc.currentLocalDescription?.type ?? null,
+        });
+        return;
+    }
+
     try {
         await pc.setRemoteDescription(normalizedAnswer);
     } catch (error) {
+        // Browser may throw on stale duplicate answer after transition to stable.
+        if (error?.name === 'InvalidStateError') {
+            debugLog('answer:handle:setRemoteDescription:ignored-invalid-state', {
+                message: error?.message,
+                signalingState: pc?.signalingState ?? null,
+            });
+            return;
+        }
         debugLog('answer:handle:setRemoteDescription:error', {
             message: error?.message,
             answerType: normalizedAnswer.type,

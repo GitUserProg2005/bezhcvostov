@@ -8,6 +8,8 @@ use App\Models\Task;
 use App\Services\AI\Actions\Handlers\CreateTasksDB;
 use App\Services\AI\Actions\Handlers\UpdateTasksDB;
 use App\Services\AI\Gigachat;
+use App\Services\AI\Ollama;
+
 
 class ActionManager
 {
@@ -113,7 +115,7 @@ class ActionManager
         $prompt .= "\n\n<<<ТЕКСТ_С_ГОЛОСА>>>\n".$textUser."\n<<<КОНЕЦ_ТЕКСТА>>>\n";
         $prompt .= "\n<<<ТЕКУЩИЕ_ЗАДАЧИ>>>\n".json_encode($currentTasksJson, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)."\n<<<КОНЕЦ_ТЕКУЩИХ_ЗАДАЧ>>>\n";
 
-        $response = app(Gigachat::class)->sendRequest($prompt, true);
+        $response = app(Ollama::class)->sendRequest($prompt, true);
         // $response = app(Ollama::class)->sendRequest($prompt, true);
 
         \Log::info('ActionManager response', ['response' => $response]);

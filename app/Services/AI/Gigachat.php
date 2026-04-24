@@ -55,6 +55,30 @@ class Gigachat {
         return $content;
     }
 
+    public function extractSchoolTaskText(string $imagePath): string
+    {
+        $prompt = <<<PROMPT
+        Ты OCR-помощник. На входе изображение (фото учебника, тетради, доски, дневника, чата, заметки).
+
+        ЗАДАЧА:
+        - Просто считай текст с изображения и верни распознанный текст.
+
+        КРИТИЧЕСКИ ВАЖНО:
+        - Не анализируй смысл.
+        - Не превращай текст в задачи.
+        - Не сокращай и не перефразируй.
+        - Не добавляй ничего от себя.
+        - Не исправляй факты и формулировки.
+        - Если фрагмент неразборчив, пропусти только его.
+
+        ФОРМАТ ОТВЕТА:
+        - Верни только чистый распознанный текст на русском, без пояснений, без markdown, без списков от модели.
+        - Если текста нет, верни: "Текст не распознан".
+        PROMPT;
+
+        return trim((string) $this->analyzeImage($imagePath, $prompt, false));
+    }
+
     public function analyzeImage(string $imagePath, string $prompt, bool $jsonFormat = false): mixed
     {
         $accessToken = $this->getAccessToken();
