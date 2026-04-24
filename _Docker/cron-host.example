@@ -1,0 +1,26 @@
+# Бэкапы Laravel (php artisan backup:run) через хостовый cron.
+# Добавьте в crontab на сервере: crontab -e
+#
+# --- Отслеживание успеха/провала ---
+#
+# 1) Письма от Laravel: в config/backup.php уже включены уведомления на mail при успехе и при ошибке.
+#    Настройте в .env отправку почты (MAIL_MAILER, MAIL_HOST, ...) и в config/backup.php укажите
+#    свой адрес в notifications.mail.to — тогда будете получать письма о результате бэкапа.
+#
+# 2) Письма от cron: в начале crontab добавьте (cron пришлёт вывод команды на почту, если он есть):
+#    MAILTO=your@email.com
+#
+# 3) Файл статуса: записывать дату и код выхода после каждого запуска (0 = успех, не 0 = ошибка):
+#    см. строку с backup-status.log ниже.
+#
+# --- Строки для расписания ---
+# На продакшене: -f docker-compose.prod.yml (без bind-mount кода)
+#
+# Раз в день в 03:00 (рекомендуется), с записью статуса:
+# 0 3 * * * cd /var/www/rus_spotify && docker compose -f docker-compose.prod.yml exec -T app php /var/www/wix/todo/artisan backup:run >> /var/www/rus_spotify/backup.log 2>&1; echo "$(date -Iseconds) exit=$?" >> /var/www/rus_spotify/backup-status.log
+#
+# Тот же запуск без файла статуса:
+# 0 3 * * * cd /var/www/rus_spotify && docker compose -f docker-compose.prod.yml exec -T app php /var/www/wix/todo/artisan backup:run >> /var/www/rus_spotify/backup.log 2>&1
+#
+# Раз в 6 часов:
+# 0 */6 * * * cd /var/www/rus_spotify && docker compose -f docker-compose.prod.yml exec -T app php /var/www/wix/todo/artisan backup:run >> /var/www/rus_spotify/backup.log 2>&1; echo "$(date -Iseconds) exit=$?" >> /var/www/rus_spotify/backup-status.log

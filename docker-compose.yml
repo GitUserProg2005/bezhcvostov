@@ -1,0 +1,220 @@
+services:
+  whisper:
+    image: onerahmet/openai-whisper-asr-webservice:latest
+    container_name: whisper-http
+    environment:
+      - ASR_MODEL=base
+      - ASR_ENGINE=openai_whisper
+    ports:
+      - "9001:9000"
+    restart: unless-stopped
+
+  # tileserver:
+  #   image: maptiler/tileserver-gl
+  #   container_name: tileserver
+  #   ports:
+  #     - "8082:8080"
+  #   volumes:
+  #     - ./_Docker/tiles:/data
+# 
+  # osrm:
+  #   image: osrm/osrm-backend
+  #   container_name: osrm
+  #   ports:
+  #     - "5000:5000"
+  #   volumes:
+  #     - ./_Docker/osrm:/data
+  #   command: osrm-routed --algorithm mld /data/map.osrm
+  #   restart: unless-stopped
+# 
+  # nominatim:
+  #   image: mediagis/nominatim:4.4
+  #   container_name: nominatim
+  #   ports:
+  #     - "8083:8080"
+  #   environment:
+  #     PBF_URL: ${NOMINATIM_PBF_URL:-https://download.geofabrik.de/russia/central-fed-district-latest.osm.pbf}
+  #     REPLICATION_URL: ""
+  #     UPDATE_MODE: "none"
+  #     THREADS: "2"
+  #     NOMINATIM_PASSWORD: nominatim
+  #   volumes:
+  #     - nominatim-data:/var/lib/postgresql/14/main
+  #   restart: unless-stopped
+
+  # db:
+  #   image: postgres:16
+  #   restart: always
+  #   volumes:
+  #     - ./tmp/db:/var/lib/postgresql/data
+  #   environment:
+  #     POSTGRES_DB: wix
+  #     POSTGRES_USER: wix_user
+  #     POSTGRES_PASSWORD: wix@228339
+  #   ports:
+  #     - 5432:5432
+
+  postgres-primary:
+    build:
+      context: ./_Docker/postgres
+    container_name: postgres-primary
+    environment:
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=secret
+      - POSTGRESQL_POSTGRES_PASSWORD=secret
+      - POSTGRESQL_DATABASE=laravel
+      - POSTGRESQL_POSTGIS_ENABLED=true
+      - REPMGR_PASSWORD=repmgrpass
+      - REPMGR_PGHBA_TRUST_ALL=yes
+
+      - REPMGR_PRIMARY_HOST=postgres-primary
+      - REPMGR_PRIMARY_PORT=5432
+      - REPMGR_PARTNER_NODES=postgres-primary:5432,postgres-replica:5432
+      - REPMGR_NODE_NAME=pg-0
+      - REPMGR_NODE_ID=1
+      - REPMGR_NODE_NETWORK_NAME=postgres-primary
+      - REPMGR_PORT_NUMBER=5432
+      - REPMGR_FAILOVER=automatic
+      - REPMGR_FENCE_OLD_PRIMARY=yes
+    volumes:
+      - postgres_primary_data:/bitnami/postgresql
+    restart: unless-stopped
+  
+  postgres-replica:
+    build:
+      context: ./_Docker/postgres
+    container_name: postgres-replica
+    depends_on:
+      - postgres-primary
+    environment:
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=secret
+      - POSTGRESQL_POSTGRES_PASSWORD=secret
+      - POSTGRESQL_DATABASE=laravel
+      - POSTGRESQL_POSTGIS_ENABLED=true
+      - REPMGR_PASSWORD=repmgrpass
+      - REPMGR_PGHBA_TRUST_ALL=yes
+
+      - REPMGR_PRIMARY_HOST=postgres-primary
+      - REPMGR_PRIMARY_PORT=5432
+      - REPMGR_PARTNER_NODES=postgres-primary:5432,postgres-replica:5432
+      - REPMGR_NODE_NAME=pg-1
+      - REPMGR_NODE_ID=2
+      - REPMGR_NODE_NETWORK_NAME=postgres-replica
+      - REPMGR_PORT_NUMBER=5432
+      - REPMGR_FAILOVER=automatic
+      - REPMGR_FENCE_OLD_PRIMARY=yes
+    ports:
+      # Прямое подключение к реплике с хоста (Laravel локально) — для проверки streaming replication
+      - "5433:5432"
+    volumes:
+      - postgres_replica_data:/bitnami/postgresql
+    restart: unless-stopped
+  
+  postgres-haproxy:
+    image: bitnamilegacy/haproxy:latest
+    container_name: postgres-haproxy
+    ports:
+      - "5432:5432"
+    depends_on:
+      - postgres-primary
+      - postgres-replica
+    links:
+      - postgres-primary
+      - postgres-replica
+    volumes:
+      - ./haproxy.cfg:/bitnami/haproxy/conf/haproxy.cfg
+    restart: unless-stopped
+
+  meilisearch:
+    image: getmeili/meilisearch:v0.28
+    container_name: app_meilisearch_bot
+    environment:
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_MASTER_KEY=masterKey
+    ports:
+      - 7700:7700
+    volumes:
+      - meilisearch-data:/meili_data
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-messenger
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: _Docker/Dockerfile
+      args:
+        VITE_REVERB_APP_KEY: ${VITE_REVERB_APP_KEY}
+        VITE_REVERB_HOST: ${VITE_REVERB_HOST}
+        VITE_REVERB_PORT: ${VITE_REVERB_PORT}
+        VITE_REVERB_SCHEME: ${VITE_REVERB_SCHEME}
+        VITE_APP_NAME: ${APP_NAME:-Laravel}
+    image: wix-app:latest
+    container_name: wix-app
+    env_file: .env
+    environment:
+      DB_HOST: postgres-haproxy
+      REDIS_HOST: redis
+    volumes:
+      - wix-storage:/var/www/wix/todo/storage
+      - wix-cache:/var/www/wix/todo/bootstrap/cache
+    depends_on:
+      - postgres-haproxy
+      - redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "9000:9000"
+
+  reverb:
+    image: wix-app:latest
+    container_name: wix-reverb
+    command: php artisan reverb:start --debug
+    env_file: .env
+    environment:
+      DB_HOST: postgres-haproxy
+      REDIS_HOST: redis
+      REVERB_SERVER_HOST: 0.0.0.0
+      REVERB_SERVER_PORT: 8081
+    volumes:
+      - wix-storage:/var/www/wix/todo/storage
+      - wix-cache:/var/www/wix/todo/bootstrap/cache
+    depends_on:
+      - app
+      - redis
+    ports:
+      - "8081:8081"
+    restart: unless-stopped
+
+  queue:
+    image: wix-app:latest
+    container_name: wix-queue
+    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+    env_file: .env
+    environment:
+      DB_HOST: postgres-haproxy
+      REDIS_HOST: redis
+    volumes:
+      - wix-storage:/var/www/wix/todo/storage
+      - wix-cache:/var/www/wix/todo/bootstrap/cache
+    depends_on:
+      - app
+      - redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  meilisearch-data:
+  nominatim-data:
+
+  wix-storage:
+  wix-cache:
+
+  postgres_primary_data:
+  postgres_replica_data:

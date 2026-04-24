@@ -1,0 +1,145 @@
+services:
+  tileserver:
+    image: maptiler/tileserver-gl
+    container_name: tileserver-dev
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./_Docker/tiles:/data
+
+  osrm:
+    image: osrm/osrm-backend
+    container_name: osrm-dev
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./_Docker/osrm:/data
+    command: osrm-routed --algorithm mld /data/map.osrm
+    restart: unless-stopped
+
+  nominatim:
+    image: mediagis/nominatim:4.4
+    container_name: nominatim-dev
+    ports:
+      - "8083:8080"
+    environment:
+      PBF_URL: ${NOMINATIM_PBF_URL:-https://download.geofabrik.de/russia/central-fed-district-latest.osm.pbf}
+      REPLICATION_URL: ""
+      UPDATE_MODE: "none"
+      THREADS: "2"
+      NOMINATIM_PASSWORD: nominatim
+    volumes:
+      - nominatim-data-dev:/var/lib/postgresql/14/main
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    restart: always
+    volumes:
+      - ./tmp/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: wix
+      POSTGRES_USER: wix_user
+      POSTGRES_PASSWORD: wix@228339
+    ports:
+      - 5432:5432
+
+  meilisearch:
+    image: getmeili/meilisearch:v0.28
+    container_name: app_meilisearch_bot_dev
+    environment:
+      - MEILI_NO_ANALYTICS=true
+      - MEILI_MASTER_KEY=masterKey
+    ports:
+      - 7700:7700
+    volumes:
+      - meilisearch-data-dev:/meili_data
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-messenger-dev
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+  # Dev: монтируем проект внутрь контейнера, чтобы не пересобирать образ `app`.
+  app:
+    image: wix-app-dev:latest
+    build:
+      context: .
+      dockerfile: _Docker/Dockerfile
+      args:
+        VITE_REVERB_APP_KEY: ${VITE_REVERB_APP_KEY}
+        VITE_REVERB_HOST: ${VITE_REVERB_HOST}
+        VITE_REVERB_PORT: ${VITE_REVERB_PORT}
+        VITE_REVERB_SCHEME: ${VITE_REVERB_SCHEME}
+        VITE_APP_NAME: ${APP_NAME:-Laravel}
+    env_file: .env
+    environment:
+      DB_HOST: db
+      REDIS_HOST: redis
+      DEV_MOUNT: "1"
+    volumes:
+      - ./:/var/www/wix/todo
+      - wix-storage-dev:/var/www/wix/todo/storage
+      - wix-cache-dev:/var/www/wix/todo/bootstrap/cache
+      - wix-vendor-dev:/var/www/wix/todo/vendor
+      - wix-node-modules-dev:/var/www/wix/todo/node_modules
+    depends_on:
+      - db
+      - redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "9000:9000"
+
+  reverb:
+    image: wix-app-dev:latest
+    container_name: wix-reverb-dev
+    command: php artisan reverb:start
+    env_file: .env
+    environment:
+      DB_HOST: db
+      REDIS_HOST: redis
+      REVERB_SERVER_HOST: 0.0.0.0
+      REVERB_SERVER_PORT: 8081
+    volumes:
+      - ./:/var/www/wix/todo
+      - wix-storage-dev:/var/www/wix/todo/storage
+      - wix-cache-dev:/var/www/wix/todo/bootstrap/cache
+      - wix-vendor-dev:/var/www/wix/todo/vendor
+      - wix-node-modules-dev:/var/www/wix/todo/node_modules
+    depends_on:
+      - app
+      - redis
+    ports:
+      - "8081:8081"
+
+  queue:
+    image: wix-app-dev:latest
+    container_name: wix-queue-dev
+    command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+    env_file: .env
+    environment:
+      DB_HOST: db
+      REDIS_HOST: redis
+    volumes:
+      - ./:/var/www/wix/todo
+      - wix-storage-dev:/var/www/wix/todo/storage
+      - wix-cache-dev:/var/www/wix/todo/bootstrap/cache
+      - wix-vendor-dev:/var/www/wix/todo/vendor
+      - wix-node-modules-dev:/var/www/wix/todo/node_modules
+    depends_on:
+      - app
+      - redis
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+volumes:
+  meilisearch-data-dev:
+  nominatim-data-dev:
+  wix-storage-dev:
+  wix-cache-dev:
+  wix-vendor-dev:
+  wix-node-modules-dev:

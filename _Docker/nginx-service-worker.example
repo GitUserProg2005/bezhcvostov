@@ -1,0 +1,11 @@
+# Разрешить service worker из /build/sw.js контролировать весь сайт (scope '/').
+# Без заголовка браузер ограничит scope каталогом /build/ — страдают push и кэш.
+#
+# Внутри server { ... } для HTTPS:
+#
+# location = /build/sw.js {
+#     add_header Service-Worker-Allowed /;
+#     try_files $uri =404;
+# }
+#
+# Если статика отдаётся иначе — главное: ответ для /build/sw.js содержит Service-Worker-Allowed: /

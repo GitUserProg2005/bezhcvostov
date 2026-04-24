@@ -1,0 +1,119 @@
+name: Build and Deploy Laravel Docker App
+
+on:
+  push:
+    branches:
+      - master
+      - main
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/app
+
+jobs:
+
+  build-and-deploy:
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+
+      # 1. Скачать код
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Имя репозитория в lowercase (Docker/GHCR требуют только нижний регистр)
+      - name: Set repository name lowercase
+        id: repo
+        run: echo "lowercase=$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      # 2. Войти в GitHub Container Registry
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+
+      # 3. Собрать Docker image (Dockerfile в _Docker/, build-args для Vite)
+      - name: Build Docker image
+        run: |
+          docker build \
+            -f _Docker/Dockerfile \
+            --build-arg VITE_REVERB_APP_KEY="${{ secrets.VITE_REVERB_APP_KEY || '' }}" \
+            --build-arg VITE_REVERB_HOST="${{ secrets.VITE_REVERB_HOST || 'localhost' }}" \
+            --build-arg VITE_REVERB_PORT="${{ secrets.VITE_REVERB_PORT || '8081' }}" \
+            --build-arg VITE_REVERB_SCHEME="${{ secrets.VITE_REVERB_SCHEME || 'https' }}" \
+            --build-arg VITE_APP_NAME="${{ secrets.VITE_APP_NAME || 'Laravel' }}" \
+            -t $REGISTRY/${{ steps.repo.outputs.lowercase }}/app:latest \
+            -t $REGISTRY/${{ steps.repo.outputs.lowercase }}/app:${{ github.sha }} \
+            .
+
+
+      # 4. Проверить, что image запускается (smoke test; приложение — php-fpm на 9000)
+      - name: Run container (smoke test)
+        run: |
+          docker run -d --name test_container \
+            -p 9000:9000 \
+            $REGISTRY/${{ steps.repo.outputs.lowercase }}/app:latest
+
+          sleep 5
+
+          docker ps
+          docker logs test_container
+
+          docker stop test_container
+          docker rm test_container
+
+
+      # 5. Push image в registry
+      - name: Push Docker image
+        run: |
+          docker push $REGISTRY/${{ steps.repo.outputs.lowercase }}/app:latest
+          docker push $REGISTRY/${{ steps.repo.outputs.lowercase }}/app:${{ github.sha }}
+
+
+      # 6. Deploy на сервер
+      - name: Deploy to production server
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/ssr_template
+
+            echo "Sync working tree to the commit this deploy was built from (${{ github.sha }})"
+            git fetch origin
+            git checkout -f ${{ github.sha }}
+
+            echo "${{ secrets.GHCR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            echo "Pull new image from GHCR"
+            docker pull ${{ env.REGISTRY }}/${{ steps.repo.outputs.lowercase }}/app:latest
+            docker tag ${{ env.REGISTRY }}/${{ steps.repo.outputs.lowercase }}/app:latest wix-app:latest
+
+            echo "Restart containers (production compose)"
+            docker compose -f docker-compose.yml up -d --remove-orphans
+
+            echo "Copy built static from container to host (for host nginx)"
+            docker compose -f docker-compose.yml run --rm -v /var/www/rus_spotify/public:/host/public app sh -c "cp -r /var/www/wix/todo/public/. /host/public/"
+
+            echo "Run migrations"
+            docker compose -f docker-compose.yml exec -T app php artisan migrate --force
+
+            echo "Cache config"
+            docker compose -f docker-compose.yml exec -T app php artisan config:cache
+
+            echo "Cache routes"
+            docker compose -f docker-compose.yml exec -T app php artisan route:cache
+
+            echo "Restart queues"
+            docker compose -f docker-compose.yml exec -T app php artisan queue:restart || true
+
+            echo "Restart Reverb"
+            docker compose -f docker-compose.yml restart reverb || true
+
+            echo "Clear old images"
+            docker image prune -af
