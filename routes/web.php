@@ -12,6 +12,8 @@ use App\Http\Controllers\GameController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ControlRequestController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ChatController;
 use App\Services\Prometheus\Metrics;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -93,6 +95,17 @@ Route::middleware('auth')->group(function () {
         ->name('control.request.update-status');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+
+    Route::get('/projects', [ProjectController::class, 'index'])->name('projects.index');
+    Route::get('/projects/get', [ProjectController::class, 'getProjects'])->name('projects.get');
+    Route::get('/projects/{project}', [ProjectController::class, 'show'])->name('projects.show');
+    Route::post('/projects', [ProjectController::class, 'create'])->name('projects.create');
+    Route::delete('/projects/{project}', [ProjectController::class, 'delete'])->name('projects.delete');
+    Route::post('/projects/{project}/users', [ProjectController::class, 'addUserToProject'])->name('projects.users.add');
+    Route::get('/projects/{project}/users/search', [ProjectController::class, 'searchUsers'])->name('projects.users.search');
+    Route::get('/projects/{project}/chats/{chat}', [ChatController::class, 'index'])->name('projects.chats.index');
+    Route::get('/projects/{project}/chats/{chat}/messages', [ChatController::class, 'getMessages'])->name('projects.chats.messages');
+    Route::post('/projects/{project}/chats/{chat}/messages', [ChatController::class, 'addMessage'])->name('projects.chats.messages.add');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

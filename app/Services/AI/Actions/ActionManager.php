@@ -2,13 +2,12 @@
 
 namespace App\Services\AI\Actions;
 
-// use App\Services\AI\Gigachat;
 use App\Events\TaskChangeAccepted;
 use App\Models\Task;
 use App\Services\AI\Actions\Handlers\CreateTasksDB;
 use App\Services\AI\Actions\Handlers\UpdateTasksDB;
 use App\Services\AI\Gigachat;
-use App\Services\AI\Ollama;
+// use App\Services\AI\Ollama;
 
 
 class ActionManager
@@ -58,6 +57,13 @@ class ActionManager
         - Используй только task_ids и subtask_ids
         - Возвращай только id
         - Используй реальные id из блока «ТЕКУЩИЕ_ЗАДАЧИ»
+
+        ВАЖНО ДЛЯ UPDATE:
+        - Для update ОБЯЗАТЕЛЬНО заполняй массив tasks (и при необходимости subtasks) полными объектами по схеме.
+        - Для update НЕЛЬЗЯ возвращать только task_ids/subtask_ids без tasks/subtasks.
+        - Если меняется только статус, все равно верни полный объект задачи (id, title, description, difficulty, estimated_minutes, deadline, status), взяв остальные поля из «ТЕКУЩИЕ_ЗАДАЧИ».
+        - Если пользователь просит перенести задачи в другой статус (pending/in_progress/done), верни в tasks все выбранные задачи с новым status и актуальными остальными полями.
+        - Поле answer должно быть коротким, а сами изменения должны быть в tasks/subtasks.
 
         ENUM:
         - difficulty: "easy" | "medium" | "hard"
@@ -115,7 +121,7 @@ class ActionManager
         $prompt .= "\n\n<<<ТЕКСТ_С_ГОЛОСА>>>\n".$textUser."\n<<<КОНЕЦ_ТЕКСТА>>>\n";
         $prompt .= "\n<<<ТЕКУЩИЕ_ЗАДАЧИ>>>\n".json_encode($currentTasksJson, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)."\n<<<КОНЕЦ_ТЕКУЩИХ_ЗАДАЧ>>>\n";
 
-        $response = app(Ollama::class)->sendRequest($prompt, true);
+        $response = app(Gigachat::class)->sendRequest($prompt, true);
         // $response = app(Ollama::class)->sendRequest($prompt, true);
 
         \Log::info('ActionManager response', ['response' => $response]);
