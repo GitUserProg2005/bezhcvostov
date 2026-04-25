@@ -7,7 +7,8 @@ use Illuminate\Support\Facades\Log;
 class ProcessInsight
 {
     public function __construct(
-        private readonly Gigachat $ollama,
+        private readonly Gigachat $gigachat,
+        // private readonly Ollama $ollama,
     ) {
     }
 
@@ -17,7 +18,8 @@ class ProcessInsight
     public function handle(string $text): array
     {
         $prompt = $this->buildPrompt($text);
-        $raw = $this->ollama->sendRequest($prompt, true);
+        $raw = $this->gigachat->sendRequest($prompt, true);
+        // $raw = $this->ollama->sendRequest($prompt, true);
 
         Log::info('[ProcessInsight] raw response', [
             'type' => gettype($raw),

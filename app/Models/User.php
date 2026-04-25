@@ -136,6 +136,21 @@ class User extends Authenticatable
         return $this->hasMany(Notification::class, 'receiver_id');
     }
 
+    public function administratedProjects(): HasMany
+    {
+        return $this->hasMany(Project::class, 'admin_id');
+    }
+
+    public function projects(): BelongsToMany
+    {
+        return $this->belongsToMany(Project::class, 'project_user')->withTimestamps();
+    }
+
+    public function messages(): HasMany
+    {
+        return $this->hasMany(Message::class);
+    }
+
     /**
      * Генерируем url к аватару пользователя
      */

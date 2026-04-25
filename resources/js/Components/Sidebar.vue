@@ -101,6 +101,15 @@ const closeSidebar = () => {
                     <i class="fa-solid fa-note-sticky text-sm"></i>
                     Инсайты звонков
                   </Link>
+
+                  <Link
+                    :href="route('projects.index')"
+                    class="sidebar-nav-link-nested"
+                    @click="closeSidebar"
+                  >
+                    <i class="fa-solid fa-diagram-project text-sm"></i>
+                    Проекты
+                  </Link>
                 </div>
               </div>
             </div>
