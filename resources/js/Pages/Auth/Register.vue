@@ -7,7 +7,7 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 const form = useForm({
   name: '',
   email: '',
-  phone: '',
+  role: 'student',
   password: '',
   password_confirmation: '',
   avatar: null,
@@ -81,9 +81,13 @@ const submit = () => {
       </div>
 
       <div>
-        <label class="t-mini text-gray-600 mb-1 block">Телефон</label>
-        <input v-model="form.phone" type="tel" class="input block w-full" placeholder="79001234567" />
-        <InputError class="mt-2" :message="form.errors.phone" />
+        <label class="t-mini text-gray-600 mb-1 block">Роль</label>
+        <select v-model="form.role" class="input block w-full" required>
+          <option value="student">Ученик</option>
+          <option value="teacher">Учитель</option>
+          <option value="parent">Родитель</option>
+        </select>
+        <InputError class="mt-2" :message="form.errors.role" />
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

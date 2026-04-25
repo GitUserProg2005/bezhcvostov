@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
@@ -10,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -34,7 +36,7 @@ class RegisteredUserController extends Controller
         $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
-            'phone' => 'nullable|string|max:20',
+            'role' => ['required', Rule::enum(UserRole::class)],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         ];
@@ -49,7 +51,8 @@ class RegisteredUserController extends Controller
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'phone' => $request->phone ?: null,
+            'account_code' => $this->generateUniqueAccountCode(),
+            'role' => $request->string('role')->toString(),
             'password' => Hash::make($request->password),
             'avatar' => $avatarPath,
         ]);
@@ -73,5 +76,14 @@ class RegisteredUserController extends Controller
         } catch (\Exception) {
             return null;
         }
+    }
+
+    private function generateUniqueAccountCode(): string
+    {
+        do {
+            $code = (string) random_int(100000, 999999);
+        } while (User::query()->where('account_code', $code)->exists());
+
+        return $code;
     }
 }

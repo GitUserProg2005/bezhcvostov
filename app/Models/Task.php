@@ -18,6 +18,7 @@ class Task extends Model
         'difficulty',
         'estimated_minutes',
         'deadline',
+        'deadline_notified',
         'end_at',
         'status',
         'source_type',
@@ -32,6 +33,7 @@ class Task extends Model
             'source_type' => TaskSourceType::class,
             'estimated_minutes' => 'integer',
             'deadline' => 'datetime',
+            'deadline_notified' => 'boolean',
             'end_at' => 'date',
             'ai_generated' => 'boolean',
         ];

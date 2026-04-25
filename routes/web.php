@@ -10,6 +10,8 @@ use App\Http\Controllers\VideoCallController;
 use App\Http\Controllers\InsightController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\ItemController;
+use App\Http\Controllers\ControlRequestController;
+use App\Http\Controllers\NotificationController;
 use App\Services\Prometheus\Metrics;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -80,6 +82,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/game/slot-items', [ItemController::class, 'getSlotItems'])->name('game.slot-items');
     Route::get('/game/items', [ItemController::class, 'getItems'])->name('game.items');
     Route::post('/game/items/add', [ItemController::class, 'addItemToUser'])->name('game.items.add');
+
+    Route::get('/control-request/search', [ControlRequestController::class, 'searchByAccountCode'])
+        ->name('control.request.search');
+    Route::post('/control-request', [ControlRequestController::class, 'createControlRequest'])
+        ->name('send.control.request');
+    Route::get('/control-request/received-pending', [ControlRequestController::class, 'pendingReceived'])
+        ->name('control.request.pending');
+    Route::post('/control-request/{controlRequest}/status', [ControlRequestController::class, 'updateStatusRequest'])
+        ->name('control.request.update-status');
+
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
 
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

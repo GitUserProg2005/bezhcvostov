@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\UserRole;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -26,6 +27,8 @@ class User extends Authenticatable
         'name',
         'avatar',
         'email',
+        'account_code',
+        'role',
         'phone',
         'balance',
         'password',
@@ -60,6 +63,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'balance' => 'integer',
+            'role' => UserRole::class,
             'password' => 'hashed',
         ];
     }
@@ -105,6 +109,31 @@ class User extends Authenticatable
         return $this->belongsToMany(Item::class, 'user_items')
             ->withPivot('is_active')
             ->withTimestamps();
+    }
+
+    public function parentConnections(): HasMany
+    {
+        return $this->hasMany(Connection::class, 'parent_id');
+    }
+
+    public function childConnections(): HasMany
+    {
+        return $this->hasMany(Connection::class, 'child_id');
+    }
+
+    public function sentControlRequests(): HasMany
+    {
+        return $this->hasMany(ControlRequest::class, 'sender_id');
+    }
+
+    public function receivedControlRequests(): HasMany
+    {
+        return $this->hasMany(ControlRequest::class, 'receiver_id');
+    }
+
+    public function receivedNotifications(): HasMany
+    {
+        return $this->hasMany(Notification::class, 'receiver_id');
     }
 
     /**

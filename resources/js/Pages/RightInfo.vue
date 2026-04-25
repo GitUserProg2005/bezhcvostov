@@ -5,6 +5,10 @@ import axios from 'axios';
 import Avatar from '@/Components/Avatar.vue';
 import SpiderChart from '@/Components/SpiderChart.vue';
 import Graph from '@/Components/Graph.vue';
+import SendRequest from '@/Components/Control/SendRequest.vue';
+import ManageRequest from '@/Components/Control/ManageRequest.vue';
+import RenderConnection from '@/Components/Control/RenderConnection.vue';
+import NotificationsMenu from '@/Components/NotificationsMenu.vue';
 
 const props = defineProps({
   isOpenRightInfo: {
@@ -19,6 +23,8 @@ const page = usePage();
 const currentUser = computed(() => page.props.auth?.user ?? null);
 const username = computed(() => currentUser.value?.name ?? 'Пользователь');
 const balance = computed(() => currentUser.value?.balance ?? 0);
+const isParent = computed(() => currentUser.value?.role === 'parent');
+const isStudent = computed(() => currentUser.value?.role === 'student');
 const friends = ref([]);
 const friendsLoading = ref(false);
 const tasks = ref([]);
@@ -70,7 +76,7 @@ const closeRightInfo = () => {
       <button type="button" @click="closeRightInfo">
         <i class="fa-solid fa-arrow-left"></i>
       </button>
-      <h2 class="title-2">Профиль</h2>
+      <h2 class="title-2">Меню</h2>
     </div>
 
     <div v-if="currentUser" class="space-y-4">
@@ -92,13 +98,7 @@ const closeRightInfo = () => {
           </div>
         </div>
 
-        <button
-          class="relative w-10 h-10 rounded-full bg-[#e97358]/10 text-[#e97358] flex items-center justify-center shrink-0"
-          aria-label="Notifications"
-        >
-          <i class="fa-solid fa-bell text-sm" />
-          <span class="absolute top-2 right-2 w-2 h-2 bg-[#e97358] rounded-full" />
-        </button>
+        <NotificationsMenu />
       </div>
 
       <div class="bg-content rounded-3xl p-2">
@@ -110,20 +110,17 @@ const closeRightInfo = () => {
         <h3 class="mb-2">Граф (база знаний)</h3>
         <Graph :tasks="tasks" :notes="notes" class="content-glass" />
       </div>
+
+      <RenderConnection v-if="isParent || isStudent" />
+      <SendRequest v-if="isParent" />
+      <ManageRequest v-if="isStudent" />
     </div>
   </aside>
 
   <aside class="hidden lg:flex h-full flex flex-col bg-content p-4 overflow-hidden">
-    <!-- Друзья (только для авторизованных) -->
     <div v-if="currentUser" class="mb-4 shrink-0">
       <div class="flex justify-between items-center gap-2">
-        <button
-          class="relative w-10 h-10 rounded-full bg-[#e97358]/10 text-[#e97358] flex items-center justify-center"
-          aria-label="Notifications"
-        >
-          <i class="fa-solid fa-bell text-sm" />
-          <span class="absolute top-2 right-2 w-2 h-2 bg-[#e97358] rounded-full" />
-        </button>   
+        <NotificationsMenu />
 
         <div class="flex items-center gap-2">
           <Avatar
@@ -141,6 +138,12 @@ const closeRightInfo = () => {
             </span>
           </div>
         </div>     
+      </div>
+
+      <div v-if="isParent || isStudent" class="mt-4">
+        <RenderConnection />
+        <SendRequest v-if="isParent" />
+        <ManageRequest v-if="isStudent" />
       </div>
     </div>
 

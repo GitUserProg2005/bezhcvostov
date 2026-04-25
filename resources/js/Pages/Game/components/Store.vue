@@ -57,12 +57,15 @@ onMounted(() => {
     getStoreItems();
 });
 
-async function addItemToUser(itemId) {
-    buyingItemId.value = itemId;
+async function addItemToUser(newItemId, oldItemId) {
+    buyingItemId.value = newItemId;
     errorMessage.value = '';
 
     try {
-        await axios.post(route('game.items.add'), { item_id: itemId });
+        await axios.post(route('game.items.add'), {
+            new_item_id: newItemId,
+            old_item_id: oldItemId ?? null,
+        });
     } catch (error) {
         errorMessage.value = 'Не удалось купить предмет';
     } finally {

@@ -42,14 +42,33 @@ class ItemController extends Controller
     public function addItemToUser(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'item_id' => ['required', 'integer', Rule::exists('items', 'id')],
+            'new_item_id' => ['required', 'integer', Rule::exists('items', 'id')],
+            'old_item_id' => ['nullable', 'integer', Rule::exists('items', 'id')],
         ]);
 
-        $request->user()
-            ->items()
-            ->syncWithoutDetaching([
-                $validated['item_id'] => ['is_active' => true],
-            ]);
+        $user = $request->user();
+        $newItem = Item::query()->with('slot:id,type')->findOrFail($validated['new_item_id']);
+
+        $payload = [
+            $newItem->id => ['is_active' => true],
+        ];
+
+        $oldItemId = $validated['old_item_id'] ?? null;
+        if ($oldItemId === null) {
+            $oldItemId = $user->items()
+                ->wherePivot('is_active', true)
+                ->whereHas('slot', function ($query) use ($newItem) {
+                    $query->where('type', $newItem->slot?->type);
+                })
+                ->where('items.id', '!=', $newItem->id)
+                ->value('items.id');
+        }
+
+        if ($oldItemId !== null) {
+            $payload[$oldItemId] = ['is_active' => false];
+        }
+
+        $user->items()->syncWithoutDetaching($payload);
 
         return response()->json([
             'success' => true,
