@@ -1,5 +1,5 @@
 <script setup>
-import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import axios from 'axios';
 import OutputMessage from '@/Pages/AiChat/components/OutputMessage.vue';
 import MascotEmotionAvatar from '@/Pages/AiChat/components/MascotEmotionAvatar.vue';
@@ -15,6 +15,8 @@ const isSending = ref(false);
 const messageText = ref('');
 const messages = ref([]);
 const messagesContainer = ref(null);
+
+const openUp = computed(() => y.value > window.innerHeight / 2);
 
 const getMainRect = () => {
     const main = document.querySelector('main');
@@ -189,7 +191,7 @@ onMounted(() => {
 
             <div
                 class="absolute w-[18rem] h-[30rem] bg-content-glass rounded-2xl overflow-hidden flex flex-col"
-                :class="['left-full ml-2 bottom-0']"
+                :class="openUp ? 'left-full ml-2 bottom-full mb-2' : 'left-full ml-2 top-full mt-2'"
             >
                 <div class="flex items-center justify-between p-4 border-b border-white/10">
                     <h3 class="title-font-4">Хвостик</h3>
